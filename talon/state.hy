@@ -34,7 +34,14 @@ Manage the client's shared state.
 (setv gateway-url (.get cfg "gateway-url" "http://localhost:18789"))
 (setv token (.get cfg "token" ""))
 (setv agent (.get cfg "agent" "main"))
-(setv session (.get cfg "session" None))
+
+;; Deterministic session ID based on hostname + agent
+;; This gives continuity across restarts without config.
+(setv session (or (.get cfg "session" None)
+                   (+ "talon-"
+                      (os.path.basename (os.path.expanduser "~"))
+                      "-"
+                      agent)))
 
 ;; SSL settings for self-signed certs / reverse proxies
 (setv ssl-verify (.get cfg "ssl-verify" True))

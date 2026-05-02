@@ -48,7 +48,7 @@ token = "your-gateway-token"
 agent = "main"
 
 # Session key for continuity across restarts.
-# If unset, the Gateway creates a new session per run.
+# If unset, talon generates a deterministic session from your username and agent.
 # session = "my-session"
 
 # SSL settings for self-signed certificates or reverse proxies.

@@ -1,5 +1,5 @@
 "
-Prompt-toolkit application for chatclaw.
+Prompt-toolkit application for talon.
 
 A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 "
@@ -51,37 +51,45 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
   (when buffer.text
     (let [text (.strip buffer.text)]
       (cond
-        ;; Command: /agent
+        ;; Command: /agent with value
         (.startswith text "/agent ")
         (let [agent (.strip (cut text 7 None))]
           (setv state.agent agent)
-          (status-text f"Agent set to: {agent}")
+          (status-text f"Agent: {agent}")
           (title-text))
-        
-        ;; Command: /session
+
+        ;; Command: /agent (no args) — show current
+        (= text "/agent")
+        (status-text f"Current agent: {state.agent}")
+
+        ;; Command: /session with value
         (.startswith text "/session ")
         (let [session (.strip (cut text 9 None))]
           (setv state.session session)
-          (status-text f"Session set to: {session}")
+          (status-text f"Session: {session}")
           (title-text))
-        
+
+        ;; Command: /session (no args) — show current
+        (= text "/session")
+        (status-text f"Current session: {state.session}")
+
         ;; Command: /url
         (.startswith text "/url ")
         (let [url (.strip (cut text 5 None))]
           (setv state.gateway-url url)
-          (status-text f"Gateway URL set to: {url}")
+          (status-text f"Gateway: {url}")
           (title-text))
-        
+
         ;; Command: /clear
         (= text "/clear")
         (do
           (output-clear)
           (setv state.messages []))
-        
+
         ;; Command: /quit or /exit
         (in text ["/quit" "/exit"])
         (quit)
-        
+
         ;; Regular chat message
         :else
         (do
@@ -103,10 +111,14 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
                              :wrap-lines True
                              :lexer (PygmentsLexer MarkdownLexer)
                              :read-only True))
-(setv prompt-field (Label :text "❯ " :align WindowAlign.LEFT))
+(defn input-prompt [n]
+  "Return the prompt prefix for the input line."
+  "❯ ")
+
 (setv input-field (TextArea :multiline False
                             :height (Dimension :min 1 :max 3)
                             :wrap-lines True
+                            :get-line-prefix input-prompt
                             :accept-handler accept-handler))
 
 
@@ -123,7 +135,7 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 (defn title-text []
   "Show the title."
   (setv title-field.text
-        f"talon - {state.agent} ({(len state.messages)} messages) ")
+        f"talon — {state.agent} · {(len state.messages)} msgs ")
   (invalidate))
 
 (defn output-text [output]
@@ -158,29 +170,19 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 
 (defn [(kb.add "home")] _ [event]
   "Scroll output to start."
-  (event.app.layout.focus output-field.window)
   (setv output-field.document (Document :text output-field.text :cursor-position 0)))
 
 (defn [(kb.add "end")] _ [event]
   "Scroll output to end."
-  (event.app.layout.focus output-field.window)
   (setv output-field.document (Document :text output-field.text :cursor-position (len output-field.text))))
 
 (defn [(kb.add "pageup")] _ [event]
   "Scroll output up."
-  (event.app.layout.focus output-field.window)
   (scroll_page_up event))
 
 (defn [(kb.add "pagedown")] _ [event]
   "Scroll output down."
-  (event.app.layout.focus output-field.window)
   (scroll_page_down event))
-
-(defn [(kb.add "s-tab")] _ [event]
-  "Toggle focus between input and output."
-  (if (is (event.app.layout.current_window) input-field.window)
-    (event.app.layout.focus output-field.window)
-    (event.app.layout.focus input-field.window)))
 
 
 ;; * app class
@@ -194,7 +196,7 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
           padding (Window :width 2)]
       (setv container (HSplit [(VSplit [title-field status-field])
                                (VSplit [padding output-field padding])
-                               (VSplit [prompt-field input-field])]))
+                               input-field]))
       (title-text)
       (status-text "Ready")
       (.__init__ (super) :layout (Layout container :focused-element input-field)
