@@ -29,14 +29,16 @@ Manage the client's shared state.
 (setv cfg (load-config config-file))
 
 ;; OpenClaw connection settings
-(setv gateway-url (:gateway-url cfg "http://localhost:18789"))
-(setv token (:token cfg ""))
-(setv agent (:agent cfg "main"))
-(setv session (:session cfg None))
+;; Note: hyphenated TOML keys must use (.get cfg "key" default) not (:key cfg)
+;; because Hy mangles hyphens to underscores in keywords.
+(setv gateway-url (.get cfg "gateway-url" "http://localhost:18789"))
+(setv token (.get cfg "token" ""))
+(setv agent (.get cfg "agent" "main"))
+(setv session (.get cfg "session" None))
 
 ;; SSL settings for self-signed certs / reverse proxies
-(setv ssl-verify (:ssl-verify cfg True))
-(let [cert (:ssl-cert cfg None)]
+(setv ssl-verify (.get cfg "ssl-verify" True))
+(let [cert (.get cfg "ssl-cert" None)]
   (setv ssl-cert (when cert (os.path.expanduser cert))))
 
 ;; Display state
