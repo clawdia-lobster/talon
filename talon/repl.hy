@@ -65,7 +65,7 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
                            ""))]
     ;; Save complete response
     (.append state.messages {"role" "assistant" "content" response-text})
-    (output-text "\n")
+    (output-text "\n────────────────────────────────────────\n")
     (setv state.streaming False)
     (state.save-history)
     (let [usage-str (if state.last-usage
