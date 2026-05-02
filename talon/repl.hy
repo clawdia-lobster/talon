@@ -43,7 +43,7 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
   
   ;; Stream response
   (status-text "Streaming...")
-  (output-text "—\n")
+  (output-text "\n---\n\n")
   (let [chunks []
         response-text (try
                          (for [:async chunk (stream state.messages)]
