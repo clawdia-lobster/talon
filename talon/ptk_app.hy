@@ -22,7 +22,7 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 (import pygments.lexers [MarkdownLexer])
 (import pygments.styles [get-style-by-name])
 
-(import talon.client [state])
+(import talon [state])
 
 
 ;; * helpers
@@ -103,6 +103,7 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
                              :wrap-lines True
                              :lexer (PygmentsLexer MarkdownLexer)
                              :read-only True))
+(setv prompt-field (Label :text "❯ " :align WindowAlign.LEFT))
 (setv input-field (TextArea :multiline False
                             :height (Dimension :min 1 :max 3)
                             :wrap-lines True
@@ -193,7 +194,7 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
           padding (Window :width 2)]
       (setv container (HSplit [(VSplit [title-field status-field])
                                (VSplit [padding output-field padding])
-                               input-field]))
+                               (VSplit [prompt-field input-field])]))
       (title-text)
       (status-text "Ready")
       (.__init__ (super) :layout (Layout container :focused-element input-field)

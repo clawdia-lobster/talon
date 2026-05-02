@@ -10,9 +10,9 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
 (import asyncio [CancelledError])
 (import sys)
 
-(import talon.client [state])
-(import talon.client.openclaw [stream connection-info])
-(import talon.client.ptk-app [app
+(import talon [state])
+(import talon.openclaw [stream connection-info])
+(import talon.ptk-app [app
                                   output-text
                                   status-text
                                   title-text])

@@ -4,8 +4,8 @@ import sys
 
 def run():
     "Run the talon client."
-    import talon.client.repl
-    talon.client.repl.run()
+    import talon.repl
+    talon.repl.run()
 
 
 if __name__ == '__main__':

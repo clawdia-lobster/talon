@@ -9,7 +9,7 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
 (import json)
 (import httpx)
 
-(import talon.client [state])
+(import talon [state])
 
 
 ;; * Request building
