@@ -63,6 +63,17 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
 ;; * Streaming client
 ;; -----------------------------------------------------------------------------
 
+(defn build-verify []
+  "Build the SSL verify parameter for httpx.
+  
+  If ssl-cert is set, use that path.
+  If ssl-verify is False, disable verification.
+  Otherwise, use default (True)."
+  (cond
+    state.ssl-cert state.ssl-cert
+    (not state.ssl-verify) False
+    :else True))
+
 (defn :async stream [messages * [agent None] [session None] [token None] [url None]]
   "Stream a chat completion from the OpenClaw Gateway.
   
@@ -74,7 +85,7 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
         session (or session state.session)
         body (build-request messages :agent agent :session session)
         headers (build-headers :token token)
-        client (httpx.AsyncClient :timeout 120)]
+        client (httpx.AsyncClient :timeout 120 :verify (build-verify))]
     (try
       (let [response (await (.post client
                                    (+ url "/v1/responses")

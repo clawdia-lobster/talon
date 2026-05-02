@@ -34,6 +34,10 @@ Manage the client's shared state.
 (setv agent (:agent cfg "main"))
 (setv session (:session cfg None))
 
+;; SSL settings for self-signed certs / reverse proxies
+(setv ssl-verify (:ssl-verify cfg True))
+(setv ssl-cert (:ssl-cert cfg None))
+
 ;; Display state
 (setv messages [])           ; local message history for display
 (setv streaming False)       ; whether we're currently receiving a stream

@@ -1,3 +1,14 @@
+# Talon client configuration
+# Place at ~/.config/talon/client.toml or ./client.toml
+
 gateway-url = "http://localhost:18789"
 token = "your-gateway-token"
 agent = "main"
+
+# Session key for continuity across restarts.
+# If unset, the Gateway creates a new session per run.
+# session = "my-session"
+
+# SSL settings for self-signed certificates or reverse proxies.
+# ssl-verify = true           # Set to false to disable certificate verification
+# ssl-cert = "/path/to/ca.pem"  # Path to custom CA certificate for self-signed certs
