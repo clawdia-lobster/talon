@@ -2,12 +2,6 @@
 
 A minimal terminal client for OpenClaw's OpenResponses API.
 
-Forked from [chatthy](https://github.com/atisharma/chatthy), stripped to essentials:
-- No client/server architecture — connects directly to OpenClaw Gateway
-- No personality/prompt system — uses OpenClaw agents
-- No ZMQ transport — plain HTTP with SSE streaming
-- No LaTeX rendering — clean markdown output
-
 ## Usage
 
 ```bash
@@ -23,6 +17,7 @@ Type these in the input field:
 | Command | Description |
 |---------|-------------|
 | `/agent NAME` | Switch to a different OpenClaw agent |
+| `/model PROVIDER/MODEL` | Override the backend model for this agent |
 | `/session KEY` | Set a session key for continuity |
 | `/url URL` | Change the Gateway URL |
 | `/clear` | Clear the output window |
@@ -33,10 +28,9 @@ Type these in the input field:
 | Key | Action |
 |-----|--------|
 | `Ctrl+Q` | Exit |
-| `Shift+Tab` | Toggle focus between input and output |
 | `Home` | Scroll output to start |
 | `End` | Scroll output to end |
-| `Page Up` / `Page Down` | Scroll output |
+| `Page Up` / `Page Down` | Scroll output by page |
 
 ## Configuration
 

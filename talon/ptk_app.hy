@@ -94,9 +94,15 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 
         ;; Command: /clear
         (= text "/clear")
+        (output-clear)
+
+        ;; Command: /new — reset conversation
+        (= text "/new")
         (do
+          (setv state.messages [])
           (output-clear)
-          (setv state.messages []))
+          (status-text "New conversation")
+          (title-text))
 
         ;; Command: /quit or /exit
         (in text ["/quit" "/exit"])
@@ -195,10 +201,12 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 
 (defn [(kb.add "pageup")] _ [event]
   "Scroll output up."
+  (event.app.layout.focus output-field)
   (scroll_page_up event))
 
 (defn [(kb.add "pagedown")] _ [event]
   "Scroll output down."
+  (event.app.layout.focus output-field)
   (scroll_page_down event))
 
 
