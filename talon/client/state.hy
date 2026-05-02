@@ -36,7 +36,8 @@ Manage the client's shared state.
 
 ;; SSL settings for self-signed certs / reverse proxies
 (setv ssl-verify (:ssl-verify cfg True))
-(setv ssl-cert (:ssl-cert cfg None))
+(let [cert (:ssl-cert cfg None)]
+  (setv ssl-cert (when cert (os.path.expanduser cert))))
 
 ;; Display state
 (setv messages [])           ; local message history for display
