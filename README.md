@@ -1,102 +1,41 @@
-# chatthy
+# talon
 
-An asynchronous terminal server/multiple-client setup for conducting and managing chats with LLMs.
+A minimal terminal client for OpenClaw's OpenResponses API.
 
-This is the successor project to [llama-farm](https://github.com/atisharma/llama_farm)
+Forked from [chatthy](https://github.com/atisharma/chatthy), stripped to essentials:
+- No client/server architecture — connects directly to OpenClaw Gateway
+- No personality/prompt system — uses OpenClaw agents
+- No ZMQ transport — plain HTTP with SSE streaming
+- No LaTeX rendering — clean markdown output
 
-The RAG/agent functionality should be split out into an API layer.
+## Usage
 
+```bash
+talon
+```
 
-### network architecture
+Type messages and press Enter. Use slash commands:
 
-- [x] client/server RPC-type architecture
-- [x] message signing
-- [ ] ensure stream chunk ordering
+- `/agent NAME` — switch to a different OpenClaw agent
+- `/session KEY` — set a session key for continuity
+- `/url URL` — change the Gateway URL
+- `/clear` — clear the output window
+- `/quit` — exit
 
+## Configuration
 
-### chat management
+Create `~/.config/talon/client.toml`:
 
-- [x] basic chat persistence and management
-- [x] set, switch to saved system prompts (personalities)
-- [ ] manage prompts like chats (as files)
-- [x] chat truncation to token length
-- [x] rename chat
-- [x] profiles (profile x personalities -> sets of chats)
-- [ ] import/export chat to client-side file
-- [x] remove text between <think> tags when saving
+```toml
+gateway-url = "http://localhost:18789"
+token = "your-gateway-token"
+agent = "main"
+```
 
+Or pass a `client.toml` in the working directory.
 
-### context workspace
+## Requirements
 
-- [x] context workspace (load/drop files)
-- [x] client inject from file
-- [x] client inject from other sources, e.g. youtube (trag)
-- [x] templates for standard instruction requests (trag)
-- [x] context workspace - bench/suspend files (hidden by filename)
-- [ ] local files / folders in transient workspace
-- [ ] checkboxes for delete / show / hide
-
-
-### client interface
-
-- [x] can switch between Anthropic, OpenAI, tabbyAPI providers and models
-- [x] streaming
-- [x] syntax highlighting
-- [x] decent REPL
-- [x] REPL command mode
-- [x] cut/copy from output
-- [x] client-side prompt editing
-- [ ] vimish keys in output
-- [ ] client-side chat/message editing (how? temporarily set the input field history? Fire up `$EDITOR` in client?)
-        - edit via chat local import/export
-- [ ] latex rendering (this is tricky in the context of prompt-toolkit, but see flatlatex).
-- [ ] generation cancellation
-- [ ] tkinter UI
-
-
-### multimodal
-
-- [ ] design with multimodal models in mind
-- [ ] image sending and use
-- [ ] image display
-
-
-### miscellaneous / extensions
-
-- [x] use proper config dir (group?)
-- [ ] dump default conf if missing
-
-
-### tool / agentic use
-
-Use agents at the API level, which is to say, use an intelligent router.
-This separates the chatthy system from the RAG/LLM logic.
-
-- [ ] (auto) tools (evolve from llama-farm -> trag)
-- [ ] user defined tool plugins
-- [ ] server use vdb context at LLM will (tool)
-- [ ] iterative workflows (refer to llama-farm, consider smolagents)
-- [ ] tool chains
-- [ ] tool: workspace file write, delete
-- [ ] tool: workspace file patch/diff
-- [ ] tool: rag query tool
-- [ ] MCP agents?
-- [ ] smolagents / archgw?
-
-
-### RAG
-
-- [x] summaries and standard client instructions (trag)
-- [x] server use vdb context on request
-- [x] set RAG provider client-side (e.g. Mistral Small, Phi-4)
-- [ ] consider best method of pdf conversion / ingestion (fvdb), OOB (image models?)
-- [ ] full arxiv paper ingestion (fvdb) - consolidate into one latex file OOB
-- [ ] vdb result reranking with context, and winnowing (agent?)
-- [ ] vdb results -> workspace (agent?)
-
-
-## unallocated / out of scope
-
-audio streaming ? - see matatonic's servers
-workflows (tree of instruction templates)
-tasks
+- Python >= 3.11
+- Hy >= 1.0
+- An OpenClaw Gateway running with the OpenResponses endpoint enabled
