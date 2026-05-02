@@ -55,59 +55,78 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
       (cond
         ;; Command: /agent with value
         (.startswith text "/agent ")
-        (let [agent (.strip (cut text 7 None))]
-          (setv state.agent agent)
-          (status-text f"Agent: {agent}")
-          (title-text))
+        (do
+          (setv buffer.text "")
+          (let [agent (.strip (cut text 7 None))]
+            (setv state.agent agent)
+            (status-text f"Agent: {agent}")
+            (title-text)))
 
         ;; Command: /agent (no args) — show current
         (= text "/agent")
-        (status-text f"Current agent: {state.agent}")
+        (do
+          (setv buffer.text "")
+          (status-text f"Current agent: {state.agent}"))
 
         ;; Command: /session with value
         (.startswith text "/session ")
-        (let [session (.strip (cut text 9 None))]
-          (setv state.session session)
-          (status-text f"Session: {session}")
-          (title-text))
+        (do
+          (setv buffer.text "")
+          (let [session (.strip (cut text 9 None))]
+            (setv state.session session)
+            (status-text f"Session: {session}")
+            (title-text)))
 
         ;; Command: /session (no args) — show current
         (= text "/session")
-        (status-text f"Current session: {state.session}")
+        (do
+          (setv buffer.text "")
+          (status-text f"Current session: {state.session}"))
 
         ;; Command: /model with value
         (.startswith text "/model ")
-        (let [model (.strip (cut text 7 None))]
-          (setv state.model model)
-          (status-text f"Model: {model}")
-          (title-text))
+        (do
+          (setv buffer.text "")
+          (let [model (.strip (cut text 7 None))]
+            (setv state.model model)
+            (status-text f"Model: {model}")
+            (title-text)))
 
         ;; Command: /model (no args) — show current
         (= text "/model")
-        (let [m (or state.model "(default)")]
-          (status-text f"Current model: {m}"))
+        (do
+          (setv buffer.text "")
+          (let [m (or state.model "(default)")]
+            (status-text f"Current model: {m}")))
 
         ;; Command: /url
         (.startswith text "/url ")
-        (let [url (.strip (cut text 5 None))]
-          (setv state.gateway-url url)
-          (status-text f"Gateway: {url}")
-          (title-text))
+        (do
+          (setv buffer.text "")
+          (let [url (.strip (cut text 5 None))]
+            (setv state.gateway-url url)
+            (status-text f"Gateway: {url}")
+            (title-text)))
 
         ;; Command: /file — attach a file
         (.startswith text "/file ")
-        (let [path (.strip (cut text 6 None))]
-          (sync-await (.put state.input-queue
-                          {"type" "file"
-                           "path" path})))
+        (do
+          (setv buffer.text "")
+          (let [path (.strip (cut text 6 None))]
+            (sync-await (.put state.input-queue
+                            {"type" "file"
+                             "path" path}))))
 
         ;; Command: /clear
         (= text "/clear")
-        (output-clear)
+        (do
+          (setv buffer.text "")
+          (output-clear))
 
         ;; Command: /new — reset conversation
         (= text "/new")
         (do
+          (setv buffer.text "")
           (setv state.messages [])
           (output-clear)
           (status-text "New conversation")
@@ -115,7 +134,9 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 
         ;; Command: /quit or /exit
         (in text ["/quit" "/exit"])
-        (quit)
+        (do
+          (setv buffer.text "")
+          (quit))
 
         ;; Regular chat message
         :else

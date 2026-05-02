@@ -58,7 +58,8 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
                              (raise (asyncio.CancelledError))))
                          (.join "" chunks)
                          (except [asyncio.CancelledError]
-                           "\n[Cancelled]")
+                           ;; Save partial response on user cancellation
+                           (.join "" chunks))
                          (except [e [Exception]]
                            (output-text f"\n❌ Error: {e}\n")
                            ""))]
@@ -81,10 +82,12 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
                     (.read f))]
       (.append state.messages {"role" "user" "content" [{"type" "input_file"
                                                            "source" {"type" "base64"
-                                                                     "data" (base64.b64encode content)
+                                                                     "data" (.decode (base64.b64encode content) "utf-8")
                                                                      "filename" (os.path.basename path)}}]})
       (output-text f"\n[Attached: {path}]\n\n")
-      (status-text f"File attached: {(os.path.basename path)}"))
+      (status-text f"File attached: {(os.path.basename path)}")
+      ;; Send immediately so Gateway receives it
+      (await (handle-chat "[File attached above]")))
     (except [e [Exception]]
       (output-text f"\n❌ Failed to attach file: {e}\n\n"))))
 

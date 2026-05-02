@@ -27,6 +27,8 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
   "Build the POST body for /v1/responses.
 
   Only sends the latest message — the Gateway stores session history server-side."
+  (when (not messages)
+    (raise (ValueError "No messages to send")))
   (let [body {"model" (if agent
                         f"openclaw/{agent}"
                         "openclaw")
@@ -114,8 +116,7 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
 (defn :async stream [messages * [agent None] [session None] [token None] [url None]]
   "Stream a chat completion from the OpenClaw Gateway.
   
-  Yields text chunks as they arrive.
-  Returns the complete assistant message string."
+  Yields text chunks as they arrive."  
   (let [url (or url state.gateway-url)
         token (or token state.token)
         agent (or agent state.agent)
@@ -125,8 +126,7 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
         verify (build-verify)
         client (httpx.AsyncClient :timeout 120 :verify verify)]
     (try
-      (let [chunks []
-            response None
+      (let [response None
             stream-cm (.stream client "POST"
                                (+ url "/v1/responses")
                                :json body
@@ -141,12 +141,10 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
                       usage (extract-usage event)]
                   (when delta
                     (.append chunks delta)
-                    (yield delta)
-                    ;; Yield control so UI updates are processed
-                    (await (asyncio.sleep 0)))
+                    (yield delta))
                   (when usage
                     (setv state.last-usage usage)))))))
-        (.join "" chunks))
+        None)
       (except [e [httpx.ConnectError]]
         (raise (RuntimeError
                  (+ f"Connection failed to {url}\n"
