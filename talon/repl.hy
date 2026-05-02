@@ -100,7 +100,16 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
   ;; Load previous history
   (setv state.messages (state.load-history))
   (when state.messages
-    (output-text f"[Loaded {(len state.messages)} messages from history]\n\n"))
+    (for [m state.messages]
+      (let [role (:role m)
+            content (:content m)]
+        (if (= role "user")
+          (output-text f"\n{content}\n\n")
+          (do
+            (output-text "\n---\n\n")
+            (output-text content)
+            (output-text "\n")))))
+    (output-text "\n---\n\n"))
   (title-text)
   (await (asyncio.gather (repl-loop)
                          (app.run-async))))

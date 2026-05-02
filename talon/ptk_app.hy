@@ -5,6 +5,7 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 "
 
 (import asyncio)
+(import shutil)
 
 (import prompt-toolkit [ANSI])
 (import prompt-toolkit.application [Application get-app-or-none])
@@ -226,6 +227,10 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
   "Scroll output down."
   (event.app.layout.focus output-field)
   (scroll_page_down event))
+
+(defn [(kb.add "tab")] _ [event]
+  "Pressing Tab focuses the input field."
+  (event.app.layout.focus input-field))
 
 
 ;; * app class
