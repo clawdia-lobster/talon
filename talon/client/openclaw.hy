@@ -4,7 +4,7 @@ OpenClaw OpenResponses API client.
 Provides streaming chat via the Gateway's /v1/responses endpoint.
 "
 
-(require hyrule [-> ->> unless])
+
 
 (import json)
 (import httpx)

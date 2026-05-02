@@ -4,24 +4,13 @@ Prompt-toolkit application for chatclaw.
 A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 "
 
-(import hy [mangle])
-
-(require hyrule [unless])
-
 (import asyncio)
-
-(import asyncio)
-(import os)
-(import re)
-(import shutil [get-terminal-size])
 
 (import prompt-toolkit [ANSI])
 (import prompt-toolkit.application [Application get-app-or-none])
 (import prompt_toolkit.layout [WindowAlign])
 (import prompt_toolkit.layout.dimension [Dimension])
 (import prompt-toolkit.document [Document])
-(import prompt-toolkit.filters [Condition has-focus])
-(import prompt-toolkit.formatted-text [to-plain-text])
 (import prompt-toolkit.key-binding [KeyBindings])
 (import prompt_toolkit.key_binding.bindings.page_navigation [scroll_page_up scroll_page_down])
 (import prompt-toolkit.layout.containers [HSplit VSplit Window])
@@ -32,8 +21,6 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 (import prompt-toolkit.lexers [PygmentsLexer])
 (import pygments.lexers [MarkdownLexer])
 (import pygments.styles [get-style-by-name])
-
-(import colorist [Color Effect])
 
 (import talon.client [state])
 
@@ -135,7 +122,7 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 (defn title-text []
   "Show the title."
   (setv title-field.text
-        f"chatclaw - {state.agent} ({(len state.messages)} messages) ")
+        f"talon - {state.agent} ({(len state.messages)} messages) ")
   (invalidate))
 
 (defn output-text [output]

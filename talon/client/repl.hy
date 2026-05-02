@@ -4,8 +4,9 @@ The main REPL event loop.
 Reads user input, sends to OpenClaw Gateway, streams response to UI.
 "
 
-(require hyrule [-> ->>])
 
+
+(import asyncio)
 (import asyncio [CancelledError])
 (import sys)
 
