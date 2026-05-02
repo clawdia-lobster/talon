@@ -5,13 +5,14 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
 "
 
 
-
 (import asyncio)
 (import asyncio [CancelledError])
+(import base64)
+(import os)
 (import sys)
 
 (import talon [state])
-(import talon.openclaw [stream connection-info])
+(import talon.openclaw [stream connection-info check-connection])
 (import talon.ptk-app [app
                                   output-text
                                   status-text
@@ -29,12 +30,16 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
         (when action
           (match (:type action "chat")
             "chat"
-            (await (handle-chat (:content action))))))
+            (await (handle-chat (:content action)))
+            "file"
+            (await (handle-file (:path action))))))
       (except [e [Exception]]
         (output-text f"\n❌ Error: {e}\n\n")))))
 
 (defn :async handle-chat [text]
   "Handle a chat message: send to Gateway, stream response."
+  ;; Reset cancellation
+  (state.cancel-event.clear)
   ;; Add user message to display
   (setv state.streaming True)
   (status-text "Sending...")
@@ -48,8 +53,13 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
         response-text (try
                          (for [:async chunk (stream state.messages)]
                            (.append chunks chunk)
-                           (output-text chunk))
+                           (output-text chunk)
+                           ;; Check for cancellation
+                           (when (state.cancel-event.is_set)
+                             (raise (asyncio.CancelledError))))
                          (.join "" chunks)
+                         (except [asyncio.CancelledError]
+                           "\n[Cancelled]")
                          (except [e [Exception]]
                            (output-text f"\n❌ Error: {e}\n")
                            ""))]
@@ -57,6 +67,7 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
     (.append state.messages {"role" "assistant" "content" response-text})
     (output-text "\n")
     (setv state.streaming False)
+    (state.save-history)
     (let [usage-str (if state.last-usage
                        (let [u state.last-usage]
                          f" · {(:input_tokens u 0)}→{(:output_tokens u 0)} tok")
@@ -64,9 +75,33 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
       (status-text f"Ready{usage-str}"))
     (title-text)))
 
+(defn :async handle-file [path]
+  "Handle a file attachment request."
+  (try
+    (let [content (with [f (open path "rb")]
+                    (.read f))]
+      (.append state.messages {"role" "user" "content" [{"type" "input_file"
+                                                           "source" {"type" "base64"
+                                                                     "data" (base64.b64encode content)
+                                                                     "filename" (os.path.basename path)}}]})
+      (output-text f"\n[Attached: {path}]\n\n")
+      (status-text f"File attached: {(os.path.basename path)}"))
+    (except [e [Exception]]
+      (output-text f"\n❌ Failed to attach file: {e}\n\n"))))
+
 (defn :async main-loop []
   "Run the REPL and UI together."
+  ;; Check connectivity
+  (let [connected (await (check-connection))]
+    (if connected
+      (status-text "Connected")
+      (status-text "⚠️ Gateway unreachable")))
   (output-text (+ "\n" (connection-info) "\n"))
+  ;; Load previous history
+  (setv state.messages (state.load-history))
+  (when state.messages
+    (output-text f"[Loaded {(len state.messages)} messages from history]\n\n"))
+  (title-text)
   (await (asyncio.gather (repl-loop)
                          (app.run-async))))
 

@@ -5,7 +5,7 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
 "
 
 
-
+(import base64)
 (import json)
 (import httpx)
 
@@ -65,6 +65,23 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
   "Extract token usage from a response.completed event."
   (when (= (:type event) "response.completed")
     (:usage (:response event) None)))
+
+
+;; * Connection check
+;; -----------------------------------------------------------------------------
+
+(defn :async check-connection []
+  "Quick connectivity check to the Gateway."
+  (let [client (httpx.AsyncClient :timeout 5 :verify (build-verify))]
+    (try
+      (let [response (await (.get client
+                                   (+ state.gateway-url "/v1/models")
+                                   :headers (build-headers :token state.token)))]
+        (= response.status_code 200))
+      (except [e [Exception]]
+        False)
+      (finally
+        (await (.aclose client))))))
 
 
 ;; * Streaming client

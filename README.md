@@ -20,7 +20,9 @@ Type these in the input field:
 | `/model PROVIDER/MODEL` | Override the backend model for this agent |
 | `/session KEY` | Set a session key for continuity |
 | `/url URL` | Change the Gateway URL |
+| `/file PATH` | Attach a file to the next message |
 | `/clear` | Clear the output window |
+| `/new` | Reset the conversation (keeps config) |
 | `/quit` or `/exit` | Exit the client |
 
 ## Keyboard shortcuts
@@ -28,13 +30,15 @@ Type these in the input field:
 | Key | Action |
 |-----|--------|
 | `Ctrl+Q` | Exit |
+| `Ctrl+C` | Cancel current generation |
+| `Alt+M` | Toggle multi-line input |
 | `Home` | Scroll output to start |
 | `End` | Scroll output to end |
 | `Page Up` / `Page Down` | Scroll output by page |
 
 ## Configuration
 
-Create `~/.config/talon/client.toml`:
+Create `$XDG_CONFIG_HOME/talon/client.toml` (falls back to `~/.config/talon/client.toml`):
 
 ```toml
 gateway-url = "http://localhost:18789"
@@ -51,6 +55,10 @@ agent = "main"
 ```
 
 Or pass a `client.toml` in the working directory.
+
+## State
+
+Conversation history is automatically saved to `$XDG_STATE_HOME/talon/` (falls back to `~/.local/state/talon/`) and restored on restart.
 
 ## Requirements
 

@@ -3,6 +3,8 @@ Manage the client's shared state.
 "
 
 (import asyncio [Queue])
+(import asyncio)
+(import json)
 (import os)
 (import pathlib [Path])
 (import tomllib)
@@ -19,9 +21,11 @@ Manage the client's shared state.
     (except [FileNotFoundError]
       {})))
 
-;; look for ~/.config/talon/client.toml
+;; look for $XDG_CONFIG_HOME/talon/client.toml
+;; fallback to ~/.config/talon/client.toml
 ;; or default to $pwd/client.toml
-(let [p (Path (os.path.expanduser "~/.config/talon/client.toml"))]
+(let [xdg-config (os.getenv "XDG_CONFIG_HOME" (os.path.expanduser "~/.config"))
+      p (Path xdg-config "talon" "client.toml")]
   (if (.exists p)
     (setv config-file (str p))
     (setv config-file "client.toml")))
@@ -57,7 +61,33 @@ Manage the client's shared state.
 (setv status "Ready")        ; connection status
 (setv last-usage None)       ; token usage from last response
 
+;; * State directory (XDG-compliant)
+;; -----------------------------------------------------------------------------
+
+(setv state-dir (os.path.expanduser "~/.local/state/talon"))
+(os.makedirs state-dir :exist_ok True)
+
+(defn save-history []
+  "Save message history to state directory."
+  (let [fname (os.path.join state-dir f"{session}.json")]
+    (with [f (open fname "w")]
+      (json.dump messages f))))
+
+(defn load-history []
+  "Load message history from state directory."
+  (let [fname (os.path.join state-dir f"{session}.json")]
+    (try
+      (with [f (open fname "r")]
+        (json.load f))
+      (except [FileNotFoundError]
+        []))))
+
 ;; * Queues
 ;; -----------------------------------------------------------------------------
 
 (setv input-queue (Queue))
+
+;; * Cancellation
+;; -----------------------------------------------------------------------------
+
+(setv cancel-event (asyncio.Event))

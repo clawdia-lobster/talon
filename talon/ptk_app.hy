@@ -41,6 +41,7 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 
 (defn quit []
   "Gracefully quit - cancel all tasks."
+  (state.save-history)
   (for [t (asyncio.all_tasks)]
     :if (not (is t (asyncio.current-task)))
     (t.cancel)))
@@ -91,6 +92,13 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
           (setv state.gateway-url url)
           (status-text f"Gateway: {url}")
           (title-text))
+
+        ;; Command: /file — attach a file
+        (.startswith text "/file ")
+        (let [path (.strip (cut text 6 None))]
+          (sync-await (.put state.input-queue
+                          {"type" "file"
+                           "path" path})))
 
         ;; Command: /clear
         (= text "/clear")
@@ -188,8 +196,18 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 
 (defn [(kb.add "c-c")] _ [event]
   "Pressing Ctrl-c will cancel the current generation."
-  ;; TODO: implement cancellation
-  None)
+  (state.cancel-event.set))
+
+(defn [(kb.add "escape" "m")] _ [event]
+  "Pressing Alt-m toggles multi-line input."
+  (let [term (.get-terminal-size shutil)]
+    (if input-field.multiline
+      (do
+        (setv input-field.window.height (Dimension :min 1 :max 3))
+        (setv input-field.multiline False))
+      (do
+        (setv input-field.window.height (Dimension (// term.lines 2)))
+        (setv input-field.multiline True)))))
 
 (defn [(kb.add "home")] _ [event]
   "Scroll output to start."
