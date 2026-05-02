@@ -44,11 +44,11 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
   (setv state.streaming True)
   (status-text "Sending...")
   (.append state.messages {"role" "user" "content" text})
-  (output-text f"\n{text}\n\n")
+  (output-text f"\n{text}\n")
   
   ;; Stream response
   (status-text "Streaming...")
-  (output-text "\n---\n\n")
+  (output-text "\n────────────────────────────────────────\n")
   (let [chunks []
         response-text (try
                          (for [:async chunk (stream state.messages)]
@@ -104,12 +104,11 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
       (let [role (:role m)
             content (:content m)]
         (if (= role "user")
-          (output-text f"\n{content}\n\n")
+          (output-text f"\n{content}\n")
           (do
-            (output-text "\n---\n\n")
-            (output-text content)
-            (output-text "\n")))))
-    (output-text "\n---\n\n"))
+            (output-text "\n────────────────────────────────────────\n")
+            (output-text content)))))
+    (output-text "\n────────────────────────────────────────\n"))
   (title-text)
   (await (asyncio.gather (repl-loop)
                          (app.run-async))))

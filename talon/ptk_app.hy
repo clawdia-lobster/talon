@@ -149,6 +149,11 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
                             :wrap-lines True
                             :get-line-prefix input-prompt
                             :accept-handler accept-handler))
+;; Custom attribute for tracking multiline mode
+(setv input-field.multiline False)
+;; Buffer multiline is a Condition reading our custom attribute
+(import prompt-toolkit.filters [Condition])
+(setv input-field.buffer.multiline (Condition (fn [] input-field.multiline)))
 
 
 (defn invalidate []
@@ -199,16 +204,16 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
   "Pressing Ctrl-c will cancel the current generation."
   (state.cancel-event.set))
 
-(defn [(kb.add "escape" "m")] _ [event]
-  "Pressing Alt-m toggles multi-line input."
+(defn [(kb.add "escape" "m" :filter input-field.buffer.multiline)] _ [event]
+  "Pressing Alt-m toggles multi-line input off."
+  (setv input-field.window.height (Dimension :min 1 :max 3))
+  (setv input-field.multiline False))
+
+(defn [(kb.add "escape" "m" :filter (Condition (fn [] (not input-field.multiline))))] _ [event]
+  "Pressing Alt-m toggles multi-line input on."
   (let [term (.get-terminal-size shutil)]
-    (if input-field.multiline
-      (do
-        (setv input-field.window.height (Dimension :min 1 :max 3))
-        (setv input-field.multiline False))
-      (do
-        (setv input-field.window.height (Dimension (// term.lines 2)))
-        (setv input-field.multiline True)))))
+    (setv input-field.window.height (Dimension (// term.lines 2)))
+    (setv input-field.multiline True)))
 
 (defn [(kb.add "home")] _ [event]
   "Scroll output to start."
