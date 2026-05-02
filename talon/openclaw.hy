@@ -123,11 +123,14 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
         verify (build-verify)
         client (httpx.AsyncClient :timeout 120 :verify verify)]
     (try
-      (let [chunks []]
-        (async-with [response (.stream client "POST"
-                                         (+ url "/v1/responses")
-                                         :json body
-                                         :headers headers)]
+      (let [chunks []
+            response None
+            stream-cm (.stream client "POST"
+                               (+ url "/v1/responses")
+                               :json body
+                               :headers headers)]
+        (try
+          (setv response (await (.__aenter__ stream-cm)))
           (when (!= response.status_code 200)
             (raise (RuntimeError f"HTTP {response.status_code}: {response.text}")))
           (for [:async line (.aiter_lines response)]
@@ -141,7 +144,12 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
                     ;; Yield control so UI updates are processed
                     (await (asyncio.sleep 0)))
                   (when usage
-                    (setv state.last-usage usage)))))))
+                    (setv state.last-usage usage))))))
+          (except [e [Exception]]
+            (await (.__aexit__ stream-cm (type e) e (getattr e "__traceback__" None)))
+            (raise e))
+          (else
+            (await (.__aexit__ stream-cm None None None))))
         (.join "" chunks))
       (except [e [httpx.ConnectError]]
         (raise (RuntimeError
