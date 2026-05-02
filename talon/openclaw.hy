@@ -34,10 +34,12 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
     body))
 
 (defn build-headers [* [token None]]
-  "Build request headers with optional auth."
+  "Build request headers with optional auth and model override."
   (let [headers {"Content-Type" "application/json"}]
     (when token
       (setv (get headers "Authorization") f"Bearer {token}"))
+    (when state.model
+      (setv (get headers "x-openclaw-model") state.model))
     headers))
 
 
@@ -58,6 +60,11 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
   "Extract text delta from an SSE event dict."
   (when (= (:type event) "response.output_text.delta")
     (:delta event "")))
+
+(defn extract-usage [event]
+  "Extract token usage from a response.completed event."
+  (when (= (:type event) "response.completed")
+    (:usage (:response event) None)))
 
 
 ;; * Streaming client
@@ -107,10 +114,13 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
           (for [:async line (.aiter_lines response)]
             (let [event (parse-sse-line line)]
               (when event
-                (let [delta (extract-text-delta event)]
+                (let [delta (extract-text-delta event)
+                      usage (extract-usage event)]
                   (when delta
                     (.append chunks delta)
-                    (yield delta))))))
+                    (yield delta))
+                  (when usage
+                    (setv state.last-usage usage))))))
           (.join "" chunks)))
       (except [e [httpx.ConnectError]]
         (raise (RuntimeError

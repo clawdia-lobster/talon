@@ -73,6 +73,18 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
         (= text "/session")
         (status-text f"Current session: {state.session}")
 
+        ;; Command: /model with value
+        (.startswith text "/model ")
+        (let [model (.strip (cut text 7 None))]
+          (setv state.model model)
+          (status-text f"Model: {model}")
+          (title-text))
+
+        ;; Command: /model (no args) — show current
+        (= text "/model")
+        (let [m (or state.model "(default)")]
+          (status-text f"Current model: {m}"))
+
         ;; Command: /url
         (.startswith text "/url ")
         (let [url (.strip (cut text 5 None))]
@@ -111,8 +123,10 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
                              :wrap-lines True
                              :lexer (PygmentsLexer MarkdownLexer)
                              :read-only True))
-(defn input-prompt [n]
-  "Return the prompt prefix for the input line."
+(defn input-prompt [n wrap-count]
+  "Return the prompt prefix for the input line.
+  
+  prompt-toolkit passes (line_number, wrap_count)."
   "❯ ")
 
 (setv input-field (TextArea :multiline False
@@ -134,9 +148,12 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 
 (defn title-text []
   "Show the title."
-  (setv title-field.text
-        f"talon — {state.agent} · {(len state.messages)} msgs ")
-  (invalidate))
+  (let [model-str (if state.model
+                    f" · {state.model}"
+                    "")]
+    (setv title-field.text
+          f"talon — {state.agent}{model-str} · {(len state.messages)} msgs ")
+    (invalidate)))
 
 (defn output-text [output]
   "Append output to output buffer."

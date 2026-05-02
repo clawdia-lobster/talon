@@ -57,7 +57,11 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
     (.append state.messages {"role" "assistant" "content" response-text})
     (output-text "\n\n")
     (setv state.streaming False)
-    (status-text "Ready")
+    (let [usage-str (if state.last-usage
+                       (let [u state.last-usage]
+                         f" · {(:input_tokens u 0)}→{(:output_tokens u 0)} tok")
+                       "")]
+      (status-text f"Ready{usage-str}"))
     (title-text)))
 
 (defn :async main-loop []

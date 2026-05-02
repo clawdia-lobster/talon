@@ -48,10 +48,14 @@ Manage the client's shared state.
 (let [cert (.get cfg "ssl-cert" None)]
   (setv ssl-cert (when cert (os.path.expanduser cert))))
 
+;; Model override (None = use agent default)
+(setv model (.get cfg "model" None))
+
 ;; Display state
 (setv messages [])           ; local message history for display
 (setv streaming False)       ; whether we're currently receiving a stream
 (setv status "Ready")        ; connection status
+(setv last-usage None)       ; token usage from last response
 
 ;; * Queues
 ;; -----------------------------------------------------------------------------
