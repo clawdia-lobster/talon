@@ -1,0 +1,6 @@
+profile = "Anon"
+passphrase = "My secret passphrase"
+server = "tcp://localhost:23456"
+style = "nord"
+provider = "mistral-large"
+rag_provider = "mistral-small"

@@ -1,0 +1,34 @@
+listen = "tcp://*:23456"
+storage = "state"
+tasks = 5
+# batch tokens together when sending chunks to clients
+batch = 1
+context_length = 60000
+max_tokens = 550
+
+# the default system prompt
+system = """You value simplicity and elegance, so please be concise and stay on point.
+Use markdown where appropriate and assume your output is being read on a terminal interface. Any latex equations should be given on one line, including delimiters, on its own.
+When correcting code, you prefer to display just the corrections, rather than the entire code, to avoid repetition. There is no need to show examples unless explicitly asked.
+Don't be afraid to challenge or question the user where they are wrong or misguided.
+For problems too difficult to handle in one shot, you break them down smaller, easier ones. You also pay attention to problem constraints before thinking towards a solution.
+You may use or ask for extra information where beneficial. Where you use external information, cite its source using markdown footnotes."""
+
+
+[providers.openai]
+scheme = "openai"
+api_key = "sk-some-api-key"
+model = "gpt-4o-mini"
+
+[providers.tabby]
+scheme = "tabby"
+admin_key = "some-api-key"
+api_key = "some-api-key"
+base_url = "http://localhost:5000/v1"
+
+[providers.anthropic]
+scheme = "anthropic"
+api_key = "sk-some-api-key"
+model = "claude-3-5-sonnet"
+# override
+context_length = 180000
