@@ -39,11 +39,11 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
   (setv state.streaming True)
   (status-text "Sending...")
   (.append state.messages {"role" "user" "content" text})
-  (output-text f"\n**user**\n{text}\n\n")
+  (output-text f"\n{text}\n\n")
   
   ;; Stream response
   (status-text "Streaming...")
-  (output-text "**assistant**\n")
+  (output-text "—\n")
   (let [chunks []
         response-text (try
                          (for [:async chunk (stream state.messages)]
@@ -55,7 +55,7 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
                            ""))]
     ;; Save complete response
     (.append state.messages {"role" "assistant" "content" response-text})
-    (output-text "\n\n")
+    (output-text "\n")
     (setv state.streaming False)
     (let [usage-str (if state.last-usage
                        (let [u state.last-usage]

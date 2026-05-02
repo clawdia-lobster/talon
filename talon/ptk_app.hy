@@ -152,7 +152,7 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
                     f" · {state.model}"
                     "")]
     (setv title-field.text
-          f"talon — {state.agent}{model-str} · {(len state.messages)} msgs ")
+          f"talon — {state.agent}{model-str} · {state.session} · {(len state.messages)} msgs ")
     (invalidate)))
 
 (defn output-text [output]

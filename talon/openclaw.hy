@@ -85,6 +85,7 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
   "Return a human-readable string describing the connection setup."
   (+ f"Gateway: {state.gateway-url}\n"
      f"Agent: {state.agent}\n"
+     f"Session: {state.session}\n"
      f"SSL verify: {state.ssl-verify}\n"
      (if state.ssl-cert
        f"SSL cert: {state.ssl-cert}\n"
