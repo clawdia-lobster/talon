@@ -1,0 +1,49 @@
+[build-system]
+requires = [
+  "setuptools>=74"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "talon"
+description = "A minimal terminal client for OpenClaw's OpenResponses API."
+authors = [
+    {name = "Ati Sharma", email = "ati+talon@agalmic.ltd"},
+]
+dynamic = ["version", "readme"]
+requires-python = ">=3.11"
+keywords = ["hy", "hylang", "openclaw", "llm", "terminal"]
+license = "AGPL-3.0-or-later"
+license-files = ["LICEN[CS]E*", "AUTHORS"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Lisp"
+]
+dependencies = [
+    "colorist",
+    "hy>=1.0",
+    "hyjinx",
+    "hyrule",
+    "httpx",
+    "platformdirs",
+    "prompt_toolkit",
+    "pygments",
+    "toolz"
+]
+
+[project.urls]
+Repository = "https://github.com/clawdia-lobster/talon"
+
+[project.scripts]
+talon = "talon.__main__:run"
+
+[tool.setuptools.dynamic]
+readme = {file = "README.md", content-type = "text/markdown"}
+version = {attr = "talon.__version__"}
+
+[tool.setuptools.package-data]
+"*" = ["*.hy", "*.md", "*.json", "*.toml"]

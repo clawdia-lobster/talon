@@ -18,5 +18,5 @@ tags.temp
 .hyrc
 .hy-history
 
-*.toml
+client.toml
 traceback.log
