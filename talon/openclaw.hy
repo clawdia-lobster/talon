@@ -24,11 +24,13 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
      "content" (:content m)}))
 
 (defn build-request [messages * [agent None] [session None]]
-  "Build the POST body for /v1/responses."
+  "Build the POST body for /v1/responses.
+
+  Only sends the latest message — the Gateway stores session history server-side."
   (let [body {"model" (if agent
                         f"openclaw/{agent}"
                         "openclaw")
-              "input" (build-input messages)
+              "input" (build-input [(get messages -1)])
               "stream" True}]
     (when session
       (setv (get body "user") session))
@@ -129,8 +131,7 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
                                (+ url "/v1/responses")
                                :json body
                                :headers headers)]
-        (try
-          (setv response (await (.__aenter__ stream-cm)))
+        (with [:async response stream-cm]
           (when (!= response.status_code 200)
             (raise (RuntimeError f"HTTP {response.status_code}: {response.text}")))
           (for [:async line (.aiter_lines response)]
@@ -144,12 +145,7 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
                     ;; Yield control so UI updates are processed
                     (await (asyncio.sleep 0)))
                   (when usage
-                    (setv state.last-usage usage))))))
-          (except [e [Exception]]
-            (await (.__aexit__ stream-cm (type e) e (getattr e "__traceback__" None)))
-            (raise e))
-          (else
-            (await (.__aexit__ stream-cm None None None))))
+                    (setv state.last-usage usage)))))))
         (.join "" chunks))
       (except [e [httpx.ConnectError]]
         (raise (RuntimeError
