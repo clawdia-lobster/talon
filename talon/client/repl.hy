@@ -11,7 +11,7 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
 (import sys)
 
 (import talon.client [state])
-(import talon.client.openclaw [stream])
+(import talon.client.openclaw [stream connection-info])
 (import talon.client.ptk-app [app
                                   output-text
                                   status-text
@@ -62,6 +62,7 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
 
 (defn :async main-loop []
   "Run the REPL and UI together."
+  (output-text (+ "\n" (connection-info) "\n"))
   (await (asyncio.gather (repl-loop)
                          (app.run-async))))
 

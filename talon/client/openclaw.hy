@@ -74,6 +74,15 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
     (not state.ssl-verify) False
     :else True))
 
+(defn connection-info []
+  "Return a human-readable string describing the connection setup."
+  (+ f"Gateway: {state.gateway-url}\n"
+     f"Agent: {state.agent}\n"
+     f"SSL verify: {state.ssl-verify}\n"
+     (if state.ssl-cert
+       f"SSL cert: {state.ssl-cert}\n"
+       "SSL cert: (none)\n")))
+
 (defn :async stream [messages * [agent None] [session None] [token None] [url None]]
   "Stream a chat completion from the OpenClaw Gateway.
   
@@ -85,7 +94,8 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
         session (or session state.session)
         body (build-request messages :agent agent :session session)
         headers (build-headers :token token)
-        client (httpx.AsyncClient :timeout 120 :verify (build-verify))]
+        verify (build-verify)
+        client (httpx.AsyncClient :timeout 120 :verify verify)]
     (try
       (let [response (await (.post client
                                    (+ url "/v1/responses")
@@ -102,5 +112,13 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
                     (.append chunks delta)
                     (yield delta))))))
           (.join "" chunks)))
+      (except [e [httpx.ConnectError]]
+        (raise (RuntimeError
+                 (+ f"Connection failed to {url}\n"
+                    f"SSL verify: {verify}\n"
+                    (if state.ssl-cert
+                      f"SSL cert path: {state.ssl-cert}\n"
+                      "")
+                    f"Original error: {e}"))))
       (finally
         (await (.aclose client))))))
