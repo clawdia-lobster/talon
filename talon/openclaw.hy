@@ -124,10 +124,10 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
         client (httpx.AsyncClient :timeout 120 :verify verify)]
     (try
       (let [chunks []]
-        (for [:async response (.stream client "POST"
-                                        (+ url "/v1/responses")
-                                        :json body
-                                        :headers headers)]
+        (async-with [response (.stream client "POST"
+                                         (+ url "/v1/responses")
+                                         :json body
+                                         :headers headers)]
           (when (!= response.status_code 200)
             (raise (RuntimeError f"HTTP {response.status_code}: {response.text}")))
           (for [:async line (.aiter_lines response)]
