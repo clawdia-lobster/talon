@@ -37,6 +37,34 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
       (except [e [Exception]]
         (output-text f"\n❌ Error: {e}\n\n")))))
 
+(defn :async stream-response [messages callback * [quiet False] [raise-errors False]]
+  "Stream a response from the Gateway, calling CALLBACK with each chunk.
+
+  Returns the full response text. If QUIET is True, CALLBACK is not called
+  during streaming (used for buffered output modes).
+  If RAISE-ERRORS is True, exceptions propagate instead of being caught."
+  (let [chunks []]
+    (try
+      (for [:async chunk (stream messages)]
+        (.append chunks chunk)
+        (when (and callback (not quiet))
+          (callback chunk))
+        ;; Check for cancellation
+        (when (state.cancel-event.is_set)
+          (raise (asyncio.CancelledError))))
+      (.join "" chunks)
+      (except [asyncio.CancelledError]
+        ;; Distinguish user-initiated vs external cancellation
+        (if (state.cancel-event.is_set)
+          (.join "" chunks)
+          (raise)))
+      (except [e [Exception]]
+        (when callback
+          (callback f"\n❌ Error: {e}\n"))
+        (when raise-errors
+          (raise e))
+        ""))))
+
 (defn :async handle-chat [text]
   "Handle a chat message: send to Gateway, stream response.
 
@@ -53,23 +81,7 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
   
   ;; Stream response
   (status-text "Streaming...")
-  (let [chunks []
-        response-text (try
-                         (for [:async chunk (stream state.messages)]
-                           (.append chunks chunk)
-                           (output-text chunk)
-                           ;; Check for cancellation
-                           (when (state.cancel-event.is_set)
-                             (raise (asyncio.CancelledError))))
-                         (.join "" chunks)
-                         (except [asyncio.CancelledError]
-                           ;; Distinguish user-initiated vs external cancellation
-                           (if (state.cancel-event.is_set)
-                             (.join "" chunks)
-                             (raise)))
-                         (except [e [Exception]]
-                           (output-text f"\n❌ Error: {e}\n")
-                           ""))]
+  (let [response-text (await (stream-response state.messages output-text))]
     ;; Save complete response
     (.append state.messages {"role" "assistant" "content" response-text})
     (output-text "\n\n────────────────────────────────────────\n")

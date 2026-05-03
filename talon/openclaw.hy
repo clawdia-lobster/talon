@@ -135,6 +135,7 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
                                :headers headers)]
         (with [:async response stream-cm]
           (when (!= response.status_code 200)
+            (await (.aread response))
             (raise (RuntimeError f"HTTP {response.status_code}: {response.text}")))
           (for [:async line (.aiter_lines response)]
             (let [event (parse-sse-line line)]

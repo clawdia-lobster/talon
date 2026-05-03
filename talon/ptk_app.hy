@@ -257,6 +257,14 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
   (event.app.layout.focus output-field)
   (scroll_page_down event))
 
+(defn [(kb.add "s-pageup")] _ [event]
+  "Shift-PgUp scrolls output up without changing focus."
+  (scroll_page_up event))
+
+(defn [(kb.add "s-pagedown")] _ [event]
+  "Shift-PgDown scrolls output down without changing focus."
+  (scroll_page_down event))
+
 (defn [(kb.add "tab")] _ [event]
   "Pressing Tab focuses the input field."
   (event.app.layout.focus input-field))

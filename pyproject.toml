@@ -25,6 +25,7 @@ classifiers = [
     "Programming Language :: Lisp"
 ]
 dependencies = [
+    "click",
     "colorist",
     "hy>=1.0",
     "hyjinx",
