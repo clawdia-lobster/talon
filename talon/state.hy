@@ -42,13 +42,13 @@ Manage the client's shared state.
 (setv token (.get cfg "token" ""))
 (setv agent (.get cfg "agent" "main"))
 
-;; Deterministic session ID based on hostname + agent
+;; Deterministic session ID based on hostname
 ;; This gives continuity across restarts without config.
 (setv session (or (.get cfg "session" None)
-                   (+ "talon-"
-                      (os.path.basename (os.path.expanduser "~"))
-                      "-"
-                      agent)))
+                  (+ "talon-"
+                     (os.path.basename (os.path.expanduser "~"))
+                     "-"
+                     agent)))
 
 ;; SSL settings for self-signed certs / reverse proxies
 (setv ssl-verify (.get cfg "ssl-verify" True))
