@@ -20,3 +20,4 @@ tags.temp
 
 client.toml
 traceback.log
+.venv
