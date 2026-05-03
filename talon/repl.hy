@@ -33,7 +33,7 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
               (= action-type "chat")
               (await (handle-chat (:content action)))
               (= action-type "file")
-              (await (handle-file (:path action))))))
+              (await (handle-file (:path action)))))))
       (except [e [Exception]]
         (output-text f"\n❌ Error: {e}\n\n")))))
 
