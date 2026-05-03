@@ -23,14 +23,17 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 (import pygments.lexers [MarkdownLexer])
 (import pygments.styles [get-style-by-name])
 
-(import talon [state])
+(import state)
 
 
 ;; * helpers
 ;; -----------------------------------------------------------------------------
 
-(defn sync-await [coro]
-  "Run an async coroutine from synchronous code."
+(defn fire-and-forget [coro]
+  "Schedule an async coroutine from synchronous code.
+
+  When the event loop is running, returns a Future (callers ignore it).
+  When not running, blocks until completion."  
   (let [loop (asyncio.get-event-loop)]
     (if (.is-running loop)
       (asyncio.run-coroutine-threadsafe coro loop)
@@ -113,9 +116,9 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
         (do
           (setv buffer.text "")
           (let [path (.strip (cut text 6 None))]
-            (sync-await (.put state.input-queue
-                            {"type" "file"
-                             "path" path}))))
+            (fire-and-forget (.put state.input-queue
+                                 {"type" "file"
+                                  "path" path}))))
 
         ;; Command: /clear
         (= text "/clear")
@@ -142,9 +145,9 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
         :else
         (do
           (setv buffer.text "")
-          (sync-await (.put state.input-queue
-                           {"type" "chat"
-                            "content" text}))))))
+          (fire-and-forget (.put state.input-queue
+                                {"type" "chat"
+                                 "content" text}))))))
   None)
 
 
@@ -275,6 +278,7 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
       (status-text "Ready")
       (.__init__ (super) :layout (Layout container :focused-element input-field)
                          :key-bindings kb
+                         :style ptk-style
                          :mouse-support True
                          :full-screen True))))
 

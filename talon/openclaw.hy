@@ -10,7 +10,7 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
 (import json)
 (import httpx)
 
-(import talon [state])
+(import state)
 
 
 ;; * Request building
@@ -140,7 +140,6 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
                 (let [delta (extract-text-delta event)
                       usage (extract-usage event)]
                   (when delta
-                    (.append chunks delta)
                     (yield delta))
                   (when usage
                     (setv state.last-usage usage)))))))

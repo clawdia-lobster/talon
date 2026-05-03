@@ -7,7 +7,7 @@ Manage the client's shared state.
 (import json)
 (import os)
 (import pathlib [Path])
-(import tomllib)
+(try (import tomllib) (except [ImportError] (import json [loads])))
 
 
 ;; * Config loading
@@ -18,6 +18,9 @@ Manage the client's shared state.
   (try
     (with [f (open config-file "rb")]
       (tomllib.load f))
+    (except [ImportError]
+      (with [f (open config-file "r")]
+        (json.loads f)))
     (except [FileNotFoundError]
       {})))
 
