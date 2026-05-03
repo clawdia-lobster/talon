@@ -23,7 +23,7 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 (import pygments.lexers [MarkdownLexer])
 (import pygments.styles [get-style-by-name])
 
-(import state)
+(import talon [state])
 
 
 ;; * helpers

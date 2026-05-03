@@ -11,9 +11,9 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
 (import os)
 (import sys)
 
-(import state)
-(import openclaw [stream connection-info check-connection])
-(import ptk_app [app
+(import talon [state])
+(import talon.openclaw [stream connection-info check-connection])
+(import talon.ptk-app [app
                                   output-text
                                   status-text
                                   title-text])
