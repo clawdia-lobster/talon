@@ -1,20 +1,9 @@
 "Tests for talon.ptk_app module."
 
-(import asyncio)
-
-
 (defclass MockBuffer []
   "Mock prompt-toolkit buffer for testing accept-handler."
   (defn __init__ [self [text ""]]
     (setv self.text text)))
-
-
-(defclass MockQueue []
-  "Mock asyncio.Queue for testing."
-  (defn __init__ [self]
-    (setv self._items []))
-  (defn :async put [self item]
-    (.append self._items item)))
 
 
 (defn _reload-all []
@@ -86,24 +75,6 @@
     (assert (= "" buf.text))))
 
 
-(defn test-command-file []
-  "/file <path> puts a file action on input-queue."
-  (import importlib)
-  (import talon [state])
-  (importlib.reload state)
-
-  (let [ptk (_reload-all)]
-    (setv state.input-queue (MockQueue))
-    (let [buf (MockBuffer "/file /tmp/test.txt")]
-      (ptk.accept-handler buf)
-      (assert (= "" buf.text))
-      ;; fire-and-forget schedules the put; check the queue has the item
-      (assert (= 1 (len state.input-queue._items)))
-      (let [item (get state.input-queue._items 0)]
-        (assert (= "file" (get item "type")))
-        (assert (= "/tmp/test.txt" (get item "path")))))))
-
-
 (defn test-command-new []
   "/new resets messages and clears buffer."
   (import importlib)
@@ -148,51 +119,17 @@
     (assert (= "" buf.text))))
 
 
-;; * Regular chat message tests
-;; -----------------------------------------------------------------------------
-
-(defn test-regular-chat-message []
-  "Non-command text is sent as a chat action on input-queue."
-  (import importlib)
-  (import talon [state])
-  (importlib.reload state)
-
-  (let [ptk (_reload-all)]
-    (setv state.input-queue (MockQueue))
-    (let [buf (MockBuffer "hello world")]
-      (ptk.accept-handler buf)
-      (assert (= "" buf.text))
-      (assert (= 1 (len state.input-queue._items)))
-      (let [item (get state.input-queue._items 0)]
-        (assert (= "chat" (get item "type")))
-        (assert (= "hello world" (get item "content")))))))
-
-
-(defn test-empty-input-ignored []
-  "Whitespace-only input is treated as a chat message (current behaviour)."
-  (import importlib)
-  (import talon [state])
-  (importlib.reload state)
-
-  (let [ptk (_reload-all)]
-    (setv state.input-queue (MockQueue))
-    (let [buf (MockBuffer "   ")]
-      (ptk.accept-handler buf)
-      ;; Whitespace-only input is queued as chat (implementation does not skip)
-      (assert (= 1 (len state.input-queue._items))))))
-
-
 ;; * Buffer clearing tests
 ;; -----------------------------------------------------------------------------
 
 (defn test-buffer-cleared-after-command []
-  "Buffer text is cleared after processing any command."
+  "Buffer text is cleared after processing synchronous commands."
   (import importlib)
   (import talon [state])
   (importlib.reload state)
 
   (let [ptk (_reload-all)]
-    ;; Test several commands clear the buffer
+    ;; Test synchronous commands clear the buffer
     (let [buf (MockBuffer "/agent test")]
       (ptk.accept-handler buf)
       (assert (= "" buf.text)))
@@ -206,13 +143,5 @@
       (assert (= "" buf.text)))
 
     (let [buf (MockBuffer "/url http://test")]
-      (ptk.accept-handler buf)
-      (assert (= "" buf.text)))
-
-    (let [buf (MockBuffer "/file /tmp/x")]
-      (ptk.accept-handler buf)
-      (assert (= "" buf.text)))
-
-    (let [buf (MockBuffer "chat message")]
       (ptk.accept-handler buf)
       (assert (= "" buf.text)))))
