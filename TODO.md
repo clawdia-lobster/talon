@@ -46,18 +46,6 @@
 **Dependencies:** `markdown` library (with GFM extensions), HTML-to-ANSI converter.
 
 ---
-
-## Separator Placement
-
-**Issue:** The horizontal rule separator (`---`) is currently added after the user message rather than after the assistant's reply. The intended flow is:
-
-1. User message
-2. Assistant reply
-3. Separator (`---`)
-4. Next user message
-
-**Fix:** Move the separator insertion point to after the assistant's response completes, not after the user's input is displayed.
-
----
-*Written: 2026-05-02 by Nereus (test session)*
-*Do not edit concurrently with the main Talon development session.*
+*Written: 2026-05-02 by Nereus (test session)
+Updated: 2026-05-03 — removed separator placement and streaming responses (solved)
+Do not edit concurrently with the main Talon development session.*

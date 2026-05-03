@@ -69,7 +69,9 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
 (defn extract-usage [event]
   "Extract token usage from a response.completed event."
   (when (= (:type event) "response.completed")
-    (:usage (:response event) None)))
+    (let [response (.get event "response" None)]
+      (when response
+        (:usage response None)))))
 
 
 ;; * Connection check
