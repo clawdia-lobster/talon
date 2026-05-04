@@ -12,9 +12,10 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
 (import sys)
 
 (import talon [state])
-(import talon.openclaw [stream connection-info check-connection])
+(import talon.openclaw [stream connection-info check-connection fetch-history])
 (import talon.ptk-app [app
                                   output-text
+                                  output-clear
                                   status-text
                                   title-text])
 
@@ -33,7 +34,9 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
               (= action-type "chat")
               (await (handle-chat (:content action)))
               (= action-type "file")
-              (await (handle-file (:path action)))))))
+              (await (handle-file (:path action)))
+              (= action-type "switch")
+              (await (handle-switch))))))
       (except [e [Exception]]
         (output-text f"\n❌ Error: {e}\n\n")))))
 
@@ -65,6 +68,37 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
           (raise e))
         ""))))
 
+(defn :async handle-switch []
+  "Handle agent/session switch: clear output and load server-side history."
+  (output-clear)
+  (setv state.messages [])
+  (try
+    (let [history (await (fetch-history))]
+      (setv state.messages history)
+      (when history
+        (for [m history]
+          (let [role (:role m)
+                content (:content m)]
+            (if (= role "user")
+              ;; User message: content may be string or list of blocks
+              (if (isinstance content str)
+                (output-text f"\n{content}\n\n")
+                ;; List content: check block type
+                (let [block (get content 0)
+                      block-type (:type block "")]
+                  (if (= block-type "input_file")
+                    ;; File attachment
+                    (let [filename (or (.get (:source block {}) "filename") "file")]
+                      (output-text f"\n[Attached: {filename}]\n\n"))
+                    ;; Text or other blocks — extract text
+                    (let [text (or (:text block) "")]
+                      (output-text f"\n{text}\n\n")))))
+              ;; Assistant message: content is already normalized to string
+              (output-text f"{content}\n\n────────────────────────────────────────\n"))))
+        (title-text)))
+    (except [e [Exception]]
+      (output-text f"\n⚠️ Could not load history: {e}\n\n"))))
+
 (defn :async handle-chat [text]
   "Handle a chat message: send to Gateway, stream response.
 
@@ -86,7 +120,6 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
     (.append state.messages {"role" "assistant" "content" response-text})
     (output-text "\n\n────────────────────────────────────────\n")
     (setv state.streaming False)
-    (state.save-history)
     (let [usage-str (if state.last-usage
                        (let [u state.last-usage]
                          f" · {(:input_tokens u 0)}→{(:output_tokens u 0)} tok")
@@ -127,19 +160,8 @@ Reads user input, sends to OpenClaw Gateway, streams response to UI.
       (status-text "Connected")
       (status-text "⚠️ Gateway unreachable")))
   (output-text (+ "\n" (connection-info) "\n"))
-  ;; Load previous history
-  (setv state.messages (state.load-history))
-  (when state.messages
-    (for [m state.messages]
-      (let [role (:role m)
-            content (:content m)]
-        (if (= role "user")
-          (if (isinstance content list)
-            (let [filename (or (:filename (:source (get content 0)) {}) "file")]
-              (output-text f"\n[Attached: {filename}]\n\n"))
-            (output-text f"\n{content}\n\n"))
-          (output-text f"{content}\n\n────────────────────────────────────────\n"))))
-    (title-text))
+  ;; Load server-side history for current agent/session
+  (await (handle-switch))
   (await (asyncio.gather (repl-loop)
                          (app.run-async))))
 

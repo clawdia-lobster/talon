@@ -256,3 +256,37 @@
     (setv state.ssl-verify False)
     (setv state.ssl-cert "/path/to/cert.pem")
     (assert (= "/path/to/cert.pem" (oc.build-verify)))))
+
+
+;; * Session key tests
+;; -----------------------------------------------------------------------------
+
+(defn test-build-session-key-with-agent []
+  "build-session-key constructs agent-scoped key."
+  (let [oc (_reload-openclaw)]
+    (assert (= "agent:nereus:openresponses-user:talon-ati"
+               (oc.build-session-key "talon-ati" "nereus")))))
+
+(defn test-build-session-key-no-agent []
+  "build-session-key without agent uses openresponses-user prefix."
+  (let [oc (_reload-openclaw)]
+    (assert (= "openresponses-user:talon-ati"
+               (oc.build-session-key "talon-ati" None)))))
+
+(defn test-build-session-key-passthrough []
+  "build-session-key passes through already-qualified keys."
+  (let [oc (_reload-openclaw)]
+    (assert (= "agent:main:openresponses-user:talon-test"
+               (oc.build-session-key "agent:main:openresponses-user:talon-test" "nereus")))))
+
+
+;; * fetch-history tests
+;; -----------------------------------------------------------------------------
+
+(defn test-fetch-history-exists []
+  "fetch-history is an async function."
+  (let [oc (_reload-openclaw)]
+    (assert (callable oc.fetch-history))
+    ;; Async functions are coroutine functions
+    (import inspect)
+    (assert (inspect.iscoroutinefunction oc.fetch-history))))

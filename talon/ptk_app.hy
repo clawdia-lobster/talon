@@ -32,12 +32,18 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 (defn fire-and-forget [coro]
   "Schedule an async coroutine from synchronous code.
 
-  When the event loop is running, returns a Future (callers ignore it).
-  When not running, blocks until completion."  
-  (let [loop (asyncio.get-event-loop)]
-    (if (.is-running loop)
-      (asyncio.run-coroutine-threadsafe coro loop)
-      (.run-until-complete loop coro))))
+  When running inside an event loop, creates a Task (callers ignore it).
+  When not running, blocks until completion with a fresh loop."
+  (try
+    (let [loop (asyncio.get-running-loop)]
+      (.create-task loop coro))
+    (except [RuntimeError]
+      ;; No running loop — block until completion
+      (let [loop (asyncio.new-event-loop)]
+        (try
+          (.run-until-complete loop coro)
+          (finally
+            (.close loop)))))))
 
 
 ;; * handlers
@@ -45,7 +51,6 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
 
 (defn quit []
   "Gracefully quit - cancel all tasks."
-  (state.save-history)
   (for [t (asyncio.all_tasks)]
     :if (not (is t (asyncio.current-task)))
     (t.cancel)))
@@ -62,8 +67,12 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
           (setv buffer.text "")
           (let [agent (.strip (cut text 7 None))]
             (setv state.agent agent)
+            (output-clear)
+            (setv state.messages [])
             (status-text f"Agent: {agent}")
-            (title-text)))
+            (title-text)
+            (fire-and-forget (.put state.input-queue
+                                  {"type" "switch"}))))
 
         ;; Command: /agent (no args) — show current
         (= text "/agent")
@@ -77,8 +86,12 @@ A minimal terminal UI for chatting with OpenClaw via the OpenResponses API.
           (setv buffer.text "")
           (let [session (.strip (cut text 9 None))]
             (setv state.session session)
+            (output-clear)
+            (setv state.messages [])
             (status-text f"Session: {session}")
-            (title-text)))
+            (title-text)
+            (fire-and-forget (.put state.input-queue
+                                  {"type" "switch"}))))
 
         ;; Command: /session (no args) — show current
         (= text "/session")

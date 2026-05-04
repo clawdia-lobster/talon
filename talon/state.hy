@@ -44,11 +44,11 @@ Manage the client's shared state.
 
 ;; Deterministic session ID based on hostname
 ;; This gives continuity across restarts without config.
+;; The Gateway scopes sessions by agent internally, so the agent
+;; name is not needed in the session key.
 (setv session (or (.get cfg "session" None)
                   (+ "talon-"
-                     (os.path.basename (os.path.expanduser "~"))
-                     "-"
-                     agent)))
+                     (os.path.basename (os.path.expanduser "~")))))
 
 ;; SSL settings for self-signed certs / reverse proxies
 (setv ssl-verify (.get cfg "ssl-verify" True))
@@ -63,27 +63,6 @@ Manage the client's shared state.
 (setv streaming False)       ; whether we're currently receiving a stream
 (setv status "Ready")        ; connection status
 (setv last-usage None)       ; token usage from last response
-
-;; * State directory (XDG-compliant)
-;; -----------------------------------------------------------------------------
-
-(setv state-dir (os.path.expanduser "~/.local/state/talon"))
-(os.makedirs state-dir :exist_ok True)
-
-(defn save-history []
-  "Save message history to state directory."
-  (let [fname (os.path.join state-dir f"{session}.json")]
-    (with [f (open fname "w")]
-      (json.dump messages f))))
-
-(defn load-history []
-  "Load message history from state directory."
-  (let [fname (os.path.join state-dir f"{session}.json")]
-    (try
-      (with [f (open fname "r")]
-        (json.load f))
-      (except [FileNotFoundError]
-        []))))
 
 ;; * Queues
 ;; -----------------------------------------------------------------------------

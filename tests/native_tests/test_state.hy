@@ -49,45 +49,16 @@
 
 
 (defn test-generate-session-id []
-  "Session ID is deterministic: talon-<user>-<agent>."
+  "Session ID is deterministic: talon-<user> (agent not included)."
   (let [state (_reload-state)]
     (assert (isinstance state.session str))
     (assert (.startswith state.session "talon-"))
-    (assert (not (= "" state.session)))))
+    (assert (not (= "" state.session)))
+    ;; Agent name should not appear in the default session ID
+    (assert (not (in state.agent state.session)))))
 
 
-(defn test-save-and-load-history [tmp-path]
-  "save-history and load-history round-trip message data."
-  (let [state (_reload-state)]
-    ;; Override state-dir to use temp directory
-    (setv state.state-dir (str tmp-path))
-    (os.makedirs (str tmp-path) :exist_ok True)
-    
-    ;; Set some messages
-    (setv state.messages [{"role" "user" "content" "hello"}
-                          {"role" "assistant" "content" "hi back"}])
-    
-    ;; Save
-    (state.save-history)
-    
-    ;; Clear in-memory messages
-    (setv state.messages [])
-    
-    ;; Load back
-    (setv state.messages (state.load-history))
-    
-    (assert (= 2 (len state.messages)))
-    (assert (= "user" (:role (get state.messages 0))))
-    (assert (= "hello" (:content (get state.messages 0))))
-    (assert (= "assistant" (:role (get state.messages 1))))
-    (assert (= "hi back" (:content (get state.messages 1))))))
 
-
-(defn test-load-history-missing-file []
-  "load-history returns empty list when file doesn't exist."
-  (let [state (_reload-state)]
-    (setv state.state-dir "/nonexistent/state/dir")
-    (assert (= [] (state.load-history)))))
 
 
 (defn test-ssl-verify-default []

@@ -52,26 +52,20 @@
       (assert (= 1 result)))))
 
 
-(defn test-run-command-session-persistence []
-  "Session should load and save history."
+(defn test-run-command-session-pinned []
+  "Pinned session should attempt to load server-side history."
   (let [cli (_reload-cli)]
     (import talon [state])
     (setv state.messages [])
     (setv state.session "cli-test-session")
-    
-    ;; Clean up any existing history
-    (import os)
-    (let [fname (os.path.join state.state-dir "cli-test-session.json")]
-      (try (os.remove fname) (except [e FileNotFoundError] None)))
     
     (setv args (type "Args" #() {"message" "test message"
                                   "json" False
                                   "quiet" True
                                   "session" "cli-test-session"}))
     
-    ;; Will fail due to no Gateway, but history handling should work
+    ;; Will fail due to no Gateway, but session pinning should work
     (let [result (asyncio.run (cli.run-command "test message" args))]
-      ;; History may or may not be saved depending on error timing
       (assert (= 1 result)))))
 
 

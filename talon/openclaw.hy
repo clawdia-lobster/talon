@@ -115,6 +115,98 @@ Provides streaming chat via the Gateway's /v1/responses endpoint.
        f"SSL cert: {state.ssl-cert}\n"
        "SSL cert: (none)\n")))
 
+(defn extract-text-content [content]
+  "Normalize server-side message content to a display string.
+
+  Content may be a string (user text) or a list of content blocks
+  (assistant messages with text/thinking/toolCall). Returns the
+  displayable text, or None for non-text content."
+  (cond
+    (isinstance content str) content
+    (isinstance content list)
+    (let [text-parts (lfor block content
+                       :if (= (:type block "") "text")
+                       (:text block ""))]
+      (when text-parts
+        (.join "\n\n" text-parts)))
+    True None))
+
+(defn normalize-history-message [m]
+  "Convert a server-side history message to a simple {role content} dict.
+
+  Extracts displayable text from content blocks. Returns None if the
+  message has no displayable content (e.g. thinking-only blocks)."
+  (let [role (:role m)
+        content (extract-text-content (:content m))
+        ;; User file attachments: content is a list of input blocks
+        raw-content (:content m)]
+    (cond
+      ;; User message with file attachment — preserve raw list for handle-switch
+      (and (= role "user") (isinstance raw-content list))
+      {"role" role "content" raw-content}
+      ;; Any message with extractable text
+      content
+      {"role" role "content" content}
+      ;; No displayable content — skip this message
+      True None)))
+
+(defn build-session-key [session agent]
+  "Construct the full Gateway session key from user session and agent.
+
+  The Gateway scopes OpenResponses sessions under the agent namespace:
+  agent:<agent>:openresponses-user:<session>. If SESSION already
+  contains the agent: prefix, return it as-is."
+  (if (.startswith session "agent:")
+    session
+    (if agent
+      f"agent:{agent}:openresponses-user:{session}"
+      f"openresponses-user:{session}")))
+
+(defn :async fetch-history [* [agent None] [session None] [token None] [url None]]
+  "Fetch session history from the Gateway via /tools/invoke.
+
+  Returns a list of {role content} message dicts, or [] on error."
+  (let [url (or url state.gateway-url)
+        token (or token state.token)
+        session (or session state.session)
+        agent (or agent state.agent)
+        session-key (build-session-key session agent)
+        body {"tool" "sessions_history"
+              "args" {"sessionKey" session-key
+                      "limit" 100}
+              "sessionKey" session-key}
+        headers (build-headers :token token)
+        verify (build-verify)
+        client (httpx.AsyncClient :timeout 30 :verify verify)]
+    (try
+      (let [response (await (.post client
+                                    (+ url "/tools/invoke")
+                                    :json body
+                                    :headers headers))]
+        (when (!= response.status_code 200)
+          (await (.aread response))
+          (raise (RuntimeError f"HTTP {response.status_code}: {response.text}")))
+        (let [data (.json response)]
+          (when (not (.get data "ok" False))
+            (raise (RuntimeError (.get (get data "error") "message" "Unknown error"))))
+          (let [result (.get data "result" {})
+                details (.get result "details" {})
+                status (.get details "status" "ok")]
+            (when (= status "error")
+              (raise (RuntimeError (.get details "error" "Unknown session error"))))
+            (let [messages (.get details "messages" [])
+                  normalized (lfor m messages
+                               :setv n (normalize-history-message m)
+                               :if n
+                               n)]
+              normalized))))
+      (except [e [httpx.ConnectError]]
+        (raise (RuntimeError
+                 (+ f"Connection failed to {url}\n"
+                    f"Original error: {e}"))))
+      (finally
+        (await (.aclose client))))))
+
 (defn :async stream [messages * [agent None] [session None] [token None] [url None]]
   "Stream a chat completion from the OpenClaw Gateway.
   

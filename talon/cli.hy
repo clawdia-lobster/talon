@@ -10,7 +10,7 @@ and session pinning for shell scripting and automation.
 (import json)
 (import sys)
 (import talon [state])
-(import talon.openclaw [stream check-connection])
+(import talon.openclaw [stream check-connection fetch-history])
 (import talon.repl [stream-response])
 
 ;; * CLI runner
@@ -25,15 +25,10 @@ and session pinning for shell scripting and automation.
   (let [response-text None
         success False]
     (try
-      ;; Load history if session is pinned
-      (when args.session (setv
-          state.session
-          args.session
-        )
-        (setv
-          state.messages
-          (state.load-history)
-        ))
+      ;; Load server-side history if session is pinned
+      (when args.session
+        (setv state.session args.session)
+        (setv state.messages (await (fetch-history))))
       ;; Add user message
       (.append state.messages {"role" "user"  "content" message})
       ;; Stream response
@@ -50,12 +45,8 @@ and session pinning for shell scripting and automation.
       )
       (setv success True)
       (except [e [Exception]]
-        (print f"talon: {e}" :file sys.stderr)
-        (when args.session (state.save-history)))
+        (print f"talon: {e}" :file sys.stderr))
       (else
-        ;; Save history with assistant response on success
-        (when args.session (.append state.messages {"role" "assistant"  "content" response-text})
-          (state.save-history))
         ;; Output based on format
         (cond
           args.json
